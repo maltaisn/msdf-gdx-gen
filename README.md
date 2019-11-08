@@ -45,6 +45,8 @@ The following image is created in the `output/` directory:
 
 <img src="examples/roboto-msdfa.png" alt="MSDFA texture atlas"/><br>
 
+---
+
 ```
 java -jar msdfgen.jar -t msdf -a none -s 24 -r 4 -c charset.txt font1.ttf font2.ttf
 ```
@@ -52,9 +54,7 @@ Generate MSDF font files with no alpha layer for input files `font1.ttf` and `fo
 Font size is 24px and distance range is 4px. Charset is taken from the `charset.txt` file.
 The following images are created in the `output/` directory:
 
-<img src="examples/roboto-bold-msdf.png" alt="MSDF texture atlas"/>
-<br>
-<img src="examples/satisfy-msdf.png" alt="MSDF texture atlas"/>
+<img src="examples/roboto-bold-msdf.png" alt="MSDF texture atlas"/>  <img src="examples/satisfy-msdf.png" alt="MSDF texture atlas"/>
 
 ## Changelog
 See [changelog](CHANGELOG.md).
@@ -62,6 +62,9 @@ See [changelog](CHANGELOG.md).
 ## License
 All code is licensed under [Apache License, Version 2.0](LICENSE).
 
+## Contributing
+Don't hesitate to open a pull request if you feel like something needs an improvement.
+Just be sure to follow existing code style.
 
 [msdfgen]: https://github.com/Chlumsky/msdfgen/releases
 [releases]: https://github.com/maltaisn/msdf-gdx-gen/releases
