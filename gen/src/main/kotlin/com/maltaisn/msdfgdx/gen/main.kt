@@ -37,10 +37,18 @@ fun main(args: Array<String>) {
             paramError(e.message)
         }
 
+        if (params.version) {
+            // Get version from resources and print it.
+            val versionRes = Parameters::class.java.classLoader.getResourceAsStream("version.txt")!!
+            val version = String(versionRes.readBytes())
+            println("msdf-gdx-gen v$version")
+            exitProcess(0)
+        }
+
         if (params.help) {
             // Show help message
             commander.usage()
-            exitProcess(1)
+            exitProcess(0)
         }
 
         // Validate arguments

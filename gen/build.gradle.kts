@@ -6,7 +6,11 @@ plugins {
     id("com.github.breadmoirai.github-release")
 }
 
-val mainClassName = "com.maltaisn.msdfgdx.gen.MainKt"
+sourceSets {
+    main {
+        resources.srcDir("src/main/res")
+    }
+}
 
 dependencies {
     val gdxVersion: String by project
@@ -26,6 +30,7 @@ java {
     targetCompatibility = JavaVersion.VERSION_1_6
 }
 
+val mainClassName = "com.maltaisn.msdfgdx.gen.MainKt"
 tasks.register<JavaExec>("run") {
     main = mainClassName
     classpath = sourceSets.main.get().runtimeClasspath
@@ -44,7 +49,10 @@ tasks.register<JavaExec>("run") {
 
 // Use this task to create a fat jar.
 val dist = tasks.register<Jar>("dist") {
+    dependsOn("updateVersionRes")
+
     from(files(sourceSets.main.get().output.classesDirs))
+    from(files(sourceSets.main.get().resources.srcDirs))
     from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
     archiveBaseName.set("msdfgen")
 
@@ -61,6 +69,14 @@ tasks.register<ProGuardTask>("shrinkJar") {
     outjars(file("$buildDir/msdfgen.jar"))
     libraryjars("${System.getProperty("java.home")}/lib/rt.jar")
     libraryjars(configurations.runtimeClasspath.get().files)
+}
+
+tasks.register("updateVersionRes") {
+    doLast {
+        val genVersion: String by project
+        val versionResFile = File("src/main/res/version.txt")
+        versionResFile.writeText(genVersion)
+    }
 }
 
 // Publish a new release to Github, using the lastest defined libVersion property,

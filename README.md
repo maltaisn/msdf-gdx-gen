@@ -34,6 +34,7 @@ the name of one of the built-in charsets: ascii, ascii-extended, latin-0, latin-
 extended. Default: ascii
 - **--compression-level**: Compression level for generated PNG, from 0 to 9. Default: 9.
 - **-h**, **--help**: Show the help message.
+- **-v**, **--version**: Show version.
 
 #### Examples
 ```

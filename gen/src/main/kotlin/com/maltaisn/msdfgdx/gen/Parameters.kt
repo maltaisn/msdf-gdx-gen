@@ -62,6 +62,9 @@ class Parameters {
     @Parameter(names = ["-h", "--help"], description = "Show help message", help = true, order = 10)
     var help = false
 
+    @Parameter(names = ["-v", "--version"], description = "Show version", order = 11)
+    var version = false
+
     /** List of characters from charset. */
     var charList = ""
         private set
