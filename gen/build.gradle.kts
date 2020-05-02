@@ -3,6 +3,7 @@ import java.util.*
 
 plugins {
     kotlin("jvm")
+    id("com.github.breadmoirai.github-release")
 }
 
 val mainClassName = "com.maltaisn.msdfgdx.gen.MainKt"
@@ -42,7 +43,6 @@ tasks.register<JavaExec>("run") {
 }
 
 // Use this task to create a fat jar.
-// The jar file is generated in test/test-desktop/build/libs
 val dist = tasks.register<Jar>("dist") {
     from(files(sourceSets.main.get().output.classesDirs))
     from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
@@ -58,7 +58,52 @@ tasks.register<ProGuardTask>("shrinkJar") {
     val distFile = dist.get().archiveFile.get().asFile
     configuration("proguard-rules.pro")
     injars(distFile)
-    outjars(distFile.resolveSibling("msdfgen-release.jar"))
+    outjars(file("$buildDir/msdfgen.jar"))
     libraryjars("${System.getProperty("java.home")}/lib/rt.jar")
     libraryjars(configurations.runtimeClasspath.get().files)
+}
+
+// Publish a new release to Github, using the lastest defined libVersion property,
+// a git tag, and the release notes in CHANGELOG.md.
+githubRelease {
+    val genVersion: String by project
+
+    if (project.hasProperty("githubReleasePluginToken")) {
+        val githubReleasePluginToken: String by project
+        token(githubReleasePluginToken)
+    }
+    owner("maltaisn")
+    repo("msdf-gdx-gen")
+
+    tagName("v$genVersion")
+    targetCommitish("master")
+    releaseName("v$genVersion")
+
+    body {
+        // Get release notes for version from changelog file.
+        val changelog = file("../CHANGELOG.md")
+        val versionChanges = StringBuilder()
+        var foundVersion = false
+        for (line in changelog.readLines()) {
+            if (foundVersion && line.matches("""^#+\s*v.+$""".toRegex())) {
+                break
+            } else if (line.matches("""^#+\s*v$genVersion$""".toRegex())) {
+                foundVersion = true
+            } else if (foundVersion) {
+                versionChanges.append(line)
+                versionChanges.append('\n')
+            }
+        }
+        if (!foundVersion) {
+            throw GradleException("No release notes for version $genVersion")
+        }
+        versionChanges.toString().trim()
+    }
+
+    releaseAssets("$buildDir/msdfgen.jar")
+
+    overwrite(true)
+}
+tasks.named("githubRelease") {
+    dependsOn("build", "dist")
 }
