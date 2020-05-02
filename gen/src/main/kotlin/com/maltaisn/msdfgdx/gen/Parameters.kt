@@ -124,6 +124,23 @@ class Parameters {
         }.toSortedSet().joinToString("")
     }
 
+    /**
+     * Return a summary of the parameter values.
+     */
+    fun summarize() = """
+        |Font files:
+        |  - ${params.joinToString("\n  - ") { File(it).absolutePath }}
+        |Output: ${File(outputDir).absolutePath}
+        |Field type: $fieldType
+        |Alpha field type: $alphaFieldType
+        |Font size: $fontSize px
+        |Distance range: $distanceRange px
+        |Texture size: ${textureSize[0]} x ${textureSize[1]} px
+        |Padding: $padding px
+        |Charset: ${charList.length} chars
+        |Compression level: $compressionLevel
+    """.trimMargin()
+
     companion object {
         private val VALID_TEXTURE_SIZES = List(12) { 1 shl (it + 5) }
 

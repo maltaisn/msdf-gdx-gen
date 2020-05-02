@@ -46,6 +46,10 @@ fun main(args: Array<String>) {
         // Validate arguments
         params.validate()
 
+        // Show arguments
+        println(params.summarize())
+        println()
+
         // Generate bitmap fonts
         val numberFmt = DecimalFormat.getInstance()
         numberFmt.minimumFractionDigits = 1
