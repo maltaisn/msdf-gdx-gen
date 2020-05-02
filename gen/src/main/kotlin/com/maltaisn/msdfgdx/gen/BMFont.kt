@@ -187,7 +187,12 @@ class BMFont(private val fontFile: File,
         }
 
         // Pack to atlas
-        packer.pack(File(params.outputDir), fontFile.nameWithoutExtension)
+        try {
+            packer.pack(File(params.outputDir), fontFile.nameWithoutExtension)
+        } catch (e: Exception) {
+            println()
+            paramError("Texture packer error: ${e.message}")
+        }
 
         // Set the glyph positions and page from the generated atlas file
         val atlasData = TextureAtlas.TextureAtlasData(LwjglFileHandle(atlasFile, Files.FileType.Absolute),

@@ -99,6 +99,12 @@ class Parameters {
             paramError("msdfgen executable '$msdfgen' doesn't exist or isn't executable.")
         }
 
+        // Due to a JCommander bug, a list parameter default value is not overwritten, only appended.
+        // https://github.com/cbeust/jcommander/issues/137
+        if (textureSize.size == 4) {
+            textureSize = textureSize.subList(2, 4)
+        }
+
         // Validate other arguments
         when {
             fieldType !in listOf("sdf", "psdf", "msdf") -> paramError("Invalid field type '$fieldType'")

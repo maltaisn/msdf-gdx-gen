@@ -93,7 +93,6 @@ fun main(args: Array<String>) {
 
     } catch (e: ParameterException) {
         println("ERROR: ${e.message}\n")
-        commander.usage()
         exitProcess(1)
     }
 }
