@@ -1,5 +1,5 @@
 import proguard.gradle.ProGuardTask
-import java.util.*
+import java.util.Properties
 
 plugins {
     kotlin("jvm")
@@ -63,6 +63,8 @@ val dist = tasks.register<Jar>("dist") {
 }
 
 tasks.register<ProGuardTask>("shrinkJar") {
+    // Make sure to run this task using IntelliJ, not on the command line, so that java.home
+    // refers to Oracle JDK 8 which has a rt.jar file (unlike later versions).
     val distFile = dist.get().archiveFile.get().asFile
     configuration("proguard-rules.pro")
     injars(distFile)
@@ -74,7 +76,7 @@ tasks.register<ProGuardTask>("shrinkJar") {
 tasks.register("updateVersionRes") {
     doLast {
         val genVersion: String by project
-        val versionResFile = File("src/main/res/version.txt")
+        val versionResFile = file("src/main/res/version.txt")
         versionResFile.writeText(genVersion)
     }
 }
