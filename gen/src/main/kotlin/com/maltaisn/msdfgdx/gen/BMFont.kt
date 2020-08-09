@@ -22,9 +22,13 @@ import com.badlogic.gdx.graphics.Pixmap
 import com.badlogic.gdx.graphics.g2d.TextureAtlas
 import com.badlogic.gdx.tools.hiero.Kerning
 import com.badlogic.gdx.tools.texturepacker.TexturePacker
+import com.badlogic.gdx.utils.IntIntMap
 import com.googlecode.pngtastic.core.PngImage
 import com.googlecode.pngtastic.core.PngOptimizer
-import kotlinx.coroutines.*
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
 import java.awt.Canvas
 import java.awt.Font
 import java.awt.FontFormatException
@@ -38,7 +42,6 @@ import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.ceil
 import kotlin.math.roundToInt
 
-
 /**
  * Generate bitmap font files from a TTF [fontFile] with some [params].
  * Generated files are the texture atlas pages and a `.fnt` file (AngelCode BMFont specs, libGDX format).
@@ -48,8 +51,10 @@ import kotlin.math.roundToInt
  * - https://github.com/soimy/msdf-bmfont-xml/blob/ff3669c2bfffd06f29bacedcdf3f073379b45e7e/index.js
  * To guess which font metrics would work but it might not work for all fonts.
  */
-class BMFont(private val fontFile: File,
-             private val params: Parameters) {
+class BMFont(
+    private val fontFile: File,
+    private val params: Parameters
+) {
 
     private val font = try {
         Font.createFont(Font.TRUETYPE_FONT, fontFile).deriveFont(params.fontSize.toFloat())
@@ -64,7 +69,6 @@ class BMFont(private val fontFile: File,
 
     private var atlasData: TextureAtlas.TextureAtlasData? = null
 
-
     fun generate(progressListener: ProgressListener) {
         generateGlyphs(progressListener)
         pack(progressListener)
@@ -72,76 +76,85 @@ class BMFont(private val fontFile: File,
         compress(progressListener)
     }
 
-
     private fun generateGlyphs(progressListener: ProgressListener) {
         progressListener(GenerationStep.GLYPH, 0f)
         val glyphsGenerated = AtomicInteger()
 
-        val kernings = Kerning().apply { load(fontFile.inputStream(), params.fontSize) }.kernings
+        val kernings = Kerning().apply {
+            load(fontFile.inputStream(), params.fontSize)
+        }.kernings
 
-        val pad = params.distanceRange / 2f
-        runBlocking {
+        glyphs += runBlocking {
             // Create a new async job for each glyph to generate and await them all.
-            val jobs = mutableListOf<Deferred<*>>()
-            for (char in params.charList) {
-                jobs += GlobalScope.async {
-                    // Create glyph vector and get its bounding box.
-                    val glyphVector = font.createGlyphVector(fontRenderContext, char.toString())
-                    val bounds = glyphVector.visualBounds
+            params.charList.map { char ->
+                GlobalScope.async {
+                    val glyph = generateGlyph(char, kernings)
 
-                    if (bounds.width > 0.0 && bounds.height > 0.0) {
-                        // Character is printable
-                        val glyph = FontGlyph()
-                        glyphs[char] = glyph
+                    // Set progress
+                    progressListener(GenerationStep.GLYPH,
+                        glyphsGenerated.incrementAndGet().toFloat() / params.charList.length)
 
-                        // Set kerning distances
-                        for (other in params.charList) {
-                            val pair = (char.toInt() shl 16) or other.toInt()
-                            glyph.kernings[other] = kernings[pair, 0]
-                        }
-
-                        val w = ceil(bounds.width + pad * 2).toInt()
-                        val h = ceil(bounds.height + pad * 2).toInt()
-
-                        // Get glyph path and translate it to center it.
-                        val tx = -bounds.x + pad
-                        val ty = -bounds.y - bounds.height - pad
-                        val path = glyphVector.getGlyphOutline(0, tx.toFloat(), ty.toFloat()) as GeneralPath
-
-                        glyph.xOffset = (bounds.x - pad).roundToInt()
-                        glyph.yOffset = (fontMetrics.ascent + bounds.y - pad).roundToInt()
-                        glyph.xAdvance = glyphVector.getGlyphMetrics(0).advanceX.roundToInt()
-
-                        // Generate main glyph image.
-                        val gen = MsdfGen(params.msdfgen, w, h, params.distanceRange, Shape.fromPath(path).toString())
-                        val glyphImage = gen.generateImage(params.fieldType)
-
-                        glyph.width = w
-                        glyph.height = h
-                        glyph.image = glyphImage
-                        glyph.channels = FontGlyph.CHANNELS_RGB
-
-                        if (params.hasAlphaChannel) {
-                            // Generate glyph image used for alpha layer.
-                            // Then keep RGB channel of glyph image and use red channel of alpha image as alpha channel.
-                            val alphaImage = gen.generateImage(params.alphaFieldType)
-                            val glyphPixels = glyphImage.getRGB(0, 0, w, h, null, 0, w)
-                            val alphaPixels = alphaImage.getRGB(0, 0, w, h, null, 0, w)
-                            for (j in glyphPixels.indices) {
-                                glyphPixels[j] = (glyphPixels[j] and 0x00FFFFFF) or (alphaPixels[j] and 0xFF shl 24)
-                            }
-                            glyphImage.setRGB(0, 0, w, h, glyphPixels, 0, w)
-                            glyph.channels = FontGlyph.CHANNELS_RGBA
-                        }
-
-                        // Set progress
-                        progressListener(GenerationStep.GLYPH,
-                                glyphsGenerated.incrementAndGet().toFloat() / params.charList.length)
-                    }
+                    if (glyph == null) null else char to glyph
                 }
+            }.awaitAll().filterNotNull()
+        }
+
+        progressListener(GenerationStep.GLYPH, 1f)
+    }
+
+    private fun generateGlyph(char: Char, kernings: IntIntMap): FontGlyph? {
+        // Create glyph vector and get its bounding box.
+        val glyphVector = font.createGlyphVector(fontRenderContext, char.toString())
+        val bounds = glyphVector.visualBounds
+
+        return if (bounds.width > 0.0 && bounds.height > 0.0) {
+            // Character is printable
+            val glyph = FontGlyph()
+
+            // Set kerning distances
+            for (other in params.charList) {
+                val pair = (char.toInt() shl 16) or other.toInt()
+                glyph.kernings[other] = kernings[pair, 0]
             }
-            jobs.awaitAll()
-            progressListener(GenerationStep.GLYPH, 1f)
+
+            val pad = params.distanceRange / 2f
+            val w = ceil(bounds.width + pad * 2).toInt()
+            val h = ceil(bounds.height + pad * 2).toInt()
+
+            // Get glyph path and translate it to center.
+            val tx = -bounds.x + pad
+            val ty = -bounds.y - bounds.height - pad
+            val path = glyphVector.getGlyphOutline(0, tx.toFloat(), ty.toFloat()) as GeneralPath
+
+            glyph.xOffset = (bounds.x - pad).roundToInt()
+            glyph.yOffset = (fontMetrics.ascent + bounds.y - pad).roundToInt()
+            glyph.xAdvance = glyphVector.getGlyphMetrics(0).advanceX.roundToInt()
+
+            // Generate main glyph image.
+            val gen = MsdfGen(params.msdfgen, w, h, params.distanceRange, Shape.fromPath(path).toString())
+            val glyphImage = gen.generateImage(params.fieldType)
+
+            glyph.width = w
+            glyph.height = h
+            glyph.image = glyphImage
+            glyph.channels = FontGlyph.CHANNELS_RGB
+
+            if (params.hasAlphaChannel) {
+                // Generate glyph image used for alpha layer.
+                // Then keep RGB channel of glyph image and use red channel of alpha image as alpha channel.
+                val alphaImage = gen.generateImage(params.alphaFieldType)
+                val glyphPixels = glyphImage.getRGB(0, 0, w, h, null, 0, w)
+                val alphaPixels = alphaImage.getRGB(0, 0, w, h, null, 0, w)
+                for (j in glyphPixels.indices) {
+                    glyphPixels[j] = (glyphPixels[j] and 0x00FFFFFF) or (alphaPixels[j] and 0xFF shl 24)
+                }
+                glyphImage.setRGB(0, 0, w, h, glyphPixels, 0, w)
+                glyph.channels = FontGlyph.CHANNELS_RGBA
+            }
+
+            glyph
+        } else {
+            null
         }
     }
 
@@ -196,7 +209,7 @@ class BMFont(private val fontFile: File,
 
         // Set the glyph positions and page from the generated atlas file
         val atlasData = TextureAtlas.TextureAtlasData(LwjglFileHandle(atlasFile, Files.FileType.Absolute),
-                LwjglFileHandle("", Files.FileType.Absolute), false)
+            LwjglFileHandle("", Files.FileType.Absolute), false)
         for (region in atlasData.regions) {
             val char = region.name.toInt().toChar()
             val glyph = glyphs[char] ?: continue
@@ -266,7 +279,7 @@ class BMFont(private val fontFile: File,
 
         // Write to file
         File(params.outputDir, fontFile.nameWithoutExtension + ".fnt")
-                .writeText(bmfont.toString())
+            .writeText(bmfont.toString())
     }
 
     private fun compress(progressListener: ProgressListener) {
@@ -290,10 +303,8 @@ class BMFont(private val fontFile: File,
         }
     }
 
-
     private fun getTextureAtlasFile(pageIndex: Int) = File(params.outputDir, fontFile.nameWithoutExtension +
             (if (pageIndex == 0) "" else (pageIndex + 1).toString()) + ".png")
-
 
     enum class GenerationStep {
         GLYPH,
