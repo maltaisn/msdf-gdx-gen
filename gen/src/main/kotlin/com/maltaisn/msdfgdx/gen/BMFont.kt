@@ -233,12 +233,12 @@ class BMFont(
         val atlasData = checkNotNull(atlasData)
 
         // Info tag
-        bmfont.appendln("info face=\"${font.fontName}\" size=${params.fontSize} " +
+        bmfont.appendLine("info face=\"${font.fontName}\" size=${params.fontSize} " +
                 "bold=${if (font.isBold) 1 else 0} italic=${if (font.isItalic) 1 else 0} " +
                 "charset=\"\" unicode=1 stretchH=100 smooth=1 aa=1 padding=0,0,0,0 spacing=0,0 outline=0")
 
         // Common tag
-        bmfont.appendln("common lineHeight=${fontMetrics.height} " +
+        bmfont.appendLine("common lineHeight=${fontMetrics.height} " +
                 "base=${fontMetrics.ascent} scaleW=${params.textureSize[0]} " +
                 "scaleH=${params.textureSize[1]} pages=${atlasData.pages.size} " +
                 "packed=0 alphaChnl=0 redChnl=0 greenChnl=0 blueChnl=0 " +
@@ -246,7 +246,7 @@ class BMFont(
 
         // Page tags
         for (i in 0 until atlasData.pages.size) {
-            bmfont.appendln("page id=$i file=\"${getTextureAtlasFile(i).name}\"")
+            bmfont.appendLine("page id=$i file=\"${getTextureAtlasFile(i).name}\"")
         }
 
         val kerningsCount = glyphs.values.map { it.kernings.values.count { k -> k != 0 } }.sum()
@@ -254,10 +254,10 @@ class BMFont(
         var elementsDone = 0f
 
         // Char tags
-        bmfont.appendln("chars count=${glyphs.size}")
+        bmfont.appendLine("chars count=${glyphs.size}")
         val channels = if (params.hasAlphaChannel) FontGlyph.CHANNELS_RGB else FontGlyph.CHANNELS_RGBA
         for ((char, glyph) in glyphs) {
-            bmfont.appendln("char id=${char.toInt()} x=${glyph.x} y=${glyph.y} " +
+            bmfont.appendLine("char id=${char.toInt()} x=${glyph.x} y=${glyph.y} " +
                     "width=${glyph.width} height=${glyph.height} " +
                     "xoffset=${glyph.xOffset} yoffset=${glyph.yOffset} " +
                     "xadvance=${glyph.xAdvance} page=${glyph.page} chnl=$channels")
@@ -266,11 +266,11 @@ class BMFont(
         }
 
         // Kerning tags
-        bmfont.appendln("kernings count=$kerningsCount")
+        bmfont.appendLine("kernings count=$kerningsCount")
         for ((char, glyph) in glyphs) {
             for ((other, kerning) in glyph.kernings) {
                 if (kerning != 0) {
-                    bmfont.appendln("kerning first=${char.toInt()} second=${other.toInt()} amount=$kerning")
+                    bmfont.appendLine("kerning first=${char.toInt()} second=${other.toInt()} amount=$kerning")
                     elementsDone++
                     progressListener(GenerationStep.FONT_FILE, elementsDone / elementsCount)
                 }
