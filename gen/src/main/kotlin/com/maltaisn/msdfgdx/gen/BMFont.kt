@@ -114,7 +114,9 @@ class BMFont(
             // Set kerning distances
             for (other in params.charList) {
                 val pair = (char.toInt() shl 16) or other.toInt()
-                glyph.kernings[other] = kernings[pair, 0]
+                if (kernings[pair, 0] != 0) {
+                    glyph.kernings[other] = kernings[pair, 0]
+                }
             }
 
             val pad = params.distanceRange / 2f
@@ -249,7 +251,7 @@ class BMFont(
             bmfont.appendln("page id=$i file=\"${getTextureAtlasFile(i).name}\"")
         }
 
-        val kerningsCount = glyphs.values.map { it.kernings.values.count { k -> k != 0 } }.sum()
+        val kerningsCount = glyphs.values.map { it.kernings.size }.sum()
         val elementsCount = glyphs.size + kerningsCount
         var elementsDone = 0f
 
@@ -269,11 +271,9 @@ class BMFont(
         bmfont.appendln("kernings count=$kerningsCount")
         for ((char, glyph) in glyphs) {
             for ((other, kerning) in glyph.kernings) {
-                if (kerning != 0) {
-                    bmfont.appendln("kerning first=${char.toInt()} second=${other.toInt()} amount=$kerning")
-                    elementsDone++
-                    progressListener(GenerationStep.FONT_FILE, elementsDone / elementsCount)
-                }
+                bmfont.appendln("kerning first=${char.toInt()} second=${other.toInt()} amount=$kerning")
+                elementsDone++
+                progressListener(GenerationStep.FONT_FILE, elementsDone / elementsCount)
             }
         }
 
