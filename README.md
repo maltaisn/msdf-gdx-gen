@@ -21,20 +21,22 @@ The CLI expects at least one parameter specifying the `.ttf` font file,
 but there can be more than one.
 
 #### Options
-- **-g**, **--msdfgen**: Path of the msdfgen executable. Default: `msdfgen.exe`.
-- **-o**, **--output**: Output path of generated font textures. Default: same directory.
-- **-t**, **--field-type**: Field type, one of: sdf, psdf, msdf. Default: msdf.
-- **-a**, **--alpha-field-type**: Alpha field type, one of: none, sdf, psdf. Default: sdf.
-- **-s**, **--font-size**: Font size for generated textures. Default: 32.
-- **-r**, **--distance-range**: Distance range in which SDF is encoded. Default: 5.
-- **-d**, **--texture-size**: Maximum width and height of generated atlas pages. Default: 512, 512.
-- **-p**, **--padding**: Padding between glyphs and on the border of the atlas pages. Default: 2.
-- **-c**, **--charset**: File containing the characters to use (encoded as UTF-8). Can also be
+- **`-g`**, **`--msdfgen`**: Path of the msdfgen executable. Default: `msdfgen.exe`.
+- **`-o`**, **`--output`**: Output path of generated font textures. Default: same directory.
+- **`-t`**, **`--field-type`**: Field type, one of: sdf, psdf, msdf, mtsdf. Default: msdf.
+If mtsdf is used, alpha field type option is ignored.
+- **`-a`**, **`--alpha-field-type`**: Alpha field type, one of: none, sdf, psdf. Default: sdf.
+- **`-s`**, **`--font-size`**: Font size for generated textures. Default: 32.
+- **`-r`**, **`--distance-range`**: Distance range in which SDF is encoded. Default: 5.
+- **`-d`**, **`--texture-size`**: Maximum width and height of generated atlas pages. Default: 512, 512.
+- **`-p`**, **`--padding`**: Padding between glyphs and on the border of the atlas pages. Default: 2.
+- **`-c`**, **`--charset`**: File containing the characters to use (encoded as UTF-8). Can also be
 the name of one of the built-in charsets: ascii, ascii-extended, latin-0, latin-9, windows-1252,
 extended. Default: ascii
-- **--compression-level**: Compression level for generated PNG, from 0 to 9. Default: 9.
-- **-h**, **--help**: Show the help message.
-- **-v**, **--version**: Show version.
+- **`--compression-level`**: Compression level for generated PNG, from 0 to 9. Default: 9.
+- **`--fast-pack`**: Enable fast packing algorithm for texture packager. Default: false.
+- **`-h`**, **`--help`**: Show the help message.
+- **`-v`**, **`--version`**: Show version.
 
 #### Examples
 ```
