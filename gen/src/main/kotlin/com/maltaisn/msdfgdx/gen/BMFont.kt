@@ -174,6 +174,8 @@ class BMFont(
             ignoreBlankImages = false
             silent = true
 
+            fast = params.fastPacking
+
             format = if (params.hasAlphaChannel) Pixmap.Format.RGBA8888 else Pixmap.Format.RGB888
         })
         val atlasFile = File(params.outputDir, fontFile.nameWithoutExtension + ".atlas")

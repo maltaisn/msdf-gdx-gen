@@ -41,6 +41,7 @@ tasks.register<JavaExec>("run") {
     val properties = Properties()
     properties.load(project.rootProject.file("local.properties").inputStream())
     setArgsString(properties.getProperty("gen-test-args"))
+    setWorkingDir(properties.getProperty("gen-test-working-dir"))
 
     if ("mac" in System.getProperty("os.name").toLowerCase()) {
         jvmArgs("-XstartOnFirstThread")

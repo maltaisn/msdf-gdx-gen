@@ -49,20 +49,29 @@ class Parameters {
     @Parameter(names = ["-d", "--texture-size"], arity = 2, description = "Maximum width and height of generated atlas pages", order = 6)
     var textureSize: List<Int> = listOf(512, 512)
 
-    @Parameter(names = ["-p", "--padding"], description = "Padding between glyphs and on the border of the atlas pages", order = 7)
+    @Parameter(names = ["-p", "--padding"],
+        description = "Padding between glyphs and on the border of the atlas pages",
+        order = 7)
     var padding: Int = 2
 
     @Parameter(names = ["-c", "--charset"], description = "File containing the characters to use (encoded as UTF-8). " +
             "Can also be one of: ascii, ascii-extended, latin-0, latin-9, windows-1252, extended.", order = 8)
     var charset: String = "ascii"
 
-    @Parameter(names = ["--compression-level"], description = "Compression level for generated PNG, from 0 to 9", order = 9)
+    @Parameter(names = ["--compression-level"],
+        description = "Compression level for generated PNG, from 0 to 9",
+        order = 9)
     var compressionLevel = 9
 
-    @Parameter(names = ["-h", "--help"], description = "Show help message", help = true, order = 10)
+    @Parameter(names = ["--fast-pack"],
+        description = "Whether to use the faster but less efficient packing algorithm",
+        order = 10)
+    var fastPacking: Boolean = false
+
+    @Parameter(names = ["-h", "--help"], description = "Show help message", help = true, order = 11)
     var help = false
 
-    @Parameter(names = ["-v", "--version"], description = "Show version", order = 11)
+    @Parameter(names = ["-v", "--version"], description = "Show version", order = 12)
     var version = false
 
     /** List of characters from charset. */
@@ -142,6 +151,7 @@ class Parameters {
         |Padding: $padding px
         |Charset: ${charList.length} chars
         |Compression level: $compressionLevel
+        |Fast packing: $fastPacking
     """.trimMargin()
 
     companion object {
