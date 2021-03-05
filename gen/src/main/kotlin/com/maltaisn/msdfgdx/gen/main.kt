@@ -73,9 +73,10 @@ fun main(args: Array<String>) {
             println("Generating distance field font for '${fontFile.name}'.")
 
             var lastPercentProgress = -1
+            var lastUpdateTime = 0L
             bmfont.generate { step, progress ->
                 val percentProgress = floor(progress * 100).toInt()
-                if (percentProgress != lastPercentProgress) {
+                if (percentProgress != lastPercentProgress || (System.currentTimeMillis() - lastUpdateTime) > 100) {
                     if (percentProgress == 0) stepStartTime = System.currentTimeMillis()
                     val stepDurationStr = numberFmt.format((System.currentTimeMillis() - stepStartTime) / 1000.0)
 
@@ -93,6 +94,7 @@ fun main(args: Array<String>) {
 
                     if (percentProgress == 100) println()  // New line for next step
                     lastPercentProgress = percentProgress
+                    lastUpdateTime = System.currentTimeMillis()
                 }
             }
 
