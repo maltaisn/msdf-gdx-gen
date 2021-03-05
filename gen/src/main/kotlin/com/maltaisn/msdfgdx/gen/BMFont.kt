@@ -139,9 +139,9 @@ class BMFont(
             glyph.width = w
             glyph.height = h
             glyph.image = glyphImage
-            glyph.channels = FontGlyph.CHANNELS_RGB
+            glyph.channels = if (params.hasAlphaChannel) FontGlyph.CHANNELS_RGBA else FontGlyph.CHANNELS_RGB
 
-            if (params.hasAlphaChannel) {
+            if (params.alphaFieldType != Parameters.FIELD_TYPE_NONE && params.fieldType != Parameters.FIELD_TYPE_MTSDF) {
                 // Generate glyph image used for alpha layer.
                 // Then keep RGB channel of glyph image and use red channel of alpha image as alpha channel.
                 val alphaImage = gen.generateImage(params.alphaFieldType)
@@ -151,7 +151,6 @@ class BMFont(
                     glyphPixels[j] = (glyphPixels[j] and 0x00FFFFFF) or (alphaPixels[j] and 0xFF shl 24)
                 }
                 glyphImage.setRGB(0, 0, w, h, glyphPixels, 0, w)
-                glyph.channels = FontGlyph.CHANNELS_RGBA
             }
 
             glyph
@@ -259,12 +258,11 @@ class BMFont(
 
         // Char tags
         bmfont.appendLine("chars count=${glyphs.size}")
-        val channels = if (params.hasAlphaChannel) FontGlyph.CHANNELS_RGB else FontGlyph.CHANNELS_RGBA
         for ((char, glyph) in glyphs) {
             bmfont.appendLine("char id=${char.toInt()} x=${glyph.x} y=${glyph.y} " +
                     "width=${glyph.width} height=${glyph.height} " +
                     "xoffset=${glyph.xOffset} yoffset=${glyph.yOffset} " +
-                    "xadvance=${glyph.xAdvance} page=${glyph.page} chnl=$channels")
+                    "xadvance=${glyph.xAdvance} page=${glyph.page} chnl=${glyph.channels}")
             elementsDone++
             progressListener(GenerationStep.FONT_FILE, elementsDone / elementsCount)
         }

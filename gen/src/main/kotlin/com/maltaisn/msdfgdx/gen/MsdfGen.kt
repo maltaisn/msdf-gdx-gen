@@ -38,9 +38,9 @@ class MsdfGen(private val msdfgen: String,
                 "-stdout",
                 "-size", width.toString(), height.toString(),
                 "-pxrange", distanceRange.toString(),
-                "-defineshape", shapeDescr,
-                fieldType)
-                .start()
+            "-defineshape", shapeDescr,
+            fieldType)
+            .start()
 
         // Convert text output to byte array.
         val reader = BufferedReader(InputStreamReader(process.inputStream))
@@ -48,29 +48,44 @@ class MsdfGen(private val msdfgen: String,
 
         var line: String? = reader.readLine()
         val channels = (line!!.length + 1) / width / 3
-        check(channels == 1 || channels == 3) { "msdfgen generated image with unsupported channels count." }
+        check(channels == 1 || channels == 3 || channels == 4) {
+            "msdfgen generated image with unsupported channels count."
+        }
 
         // Output is lines of hex-encoded bytes separated by spaces, one for each image line.
-        // There are either 1 or 3 bytes per pixel. Y coordinate must be reversed.
+        // There are either 1, 3, or 4 bytes per pixel. Y coordinate must be reversed.
         var i = pixels.size
         while (line != null) {
             i -= width
             for (j in 0 until width) {
                 // Build pixel width 3 consecutive bytes.
                 val pos = j * channels * 3
+                val a: Int
                 val r: Int
                 val g: Int
                 val b: Int
-                if (channels == 1) {
-                    r = line.substring(pos, pos + 2).toInt(16)
-                    g = r
-                    b = r
-                } else {
-                    r = line.substring(pos, pos + 2).toInt(16)
-                    g = line.substring(pos + 3, pos + 5).toInt(16)
-                    b = line.substring(pos + 6, pos + 8).toInt(16)
+                when (channels) {
+                    1 -> {
+                        r = line.substring(pos, pos + 2).toInt(16)
+                        g = r
+                        b = r
+                        a = 255
+                    }
+                    3 -> {
+                        r = line.substring(pos, pos + 2).toInt(16)
+                        g = line.substring(pos + 3, pos + 5).toInt(16)
+                        b = line.substring(pos + 6, pos + 8).toInt(16)
+                        a = 255
+                    }
+                    4 -> {
+                        r = line.substring(pos, pos + 2).toInt(16)
+                        g = line.substring(pos + 3, pos + 5).toInt(16)
+                        b = line.substring(pos + 6, pos + 8).toInt(16)
+                        a = line.substring(pos + 9, pos + 11).toInt(16)
+                    }
+                    else -> error("")
                 }
-                pixels[i + j] = (0xFF shl 24) or (r shl 16) or (g shl 8) or b
+                pixels[i + j] = (a shl 24) or (r shl 16) or (g shl 8) or b
             }
             line = reader.readLine()
         }
