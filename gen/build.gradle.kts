@@ -70,7 +70,6 @@ tasks.register<ProGuardTask>("shrinkJar") {
     configuration("proguard-rules.pro")
     injars(distFile)
     outjars(file("$buildDir/msdfgen.jar"))
-    libraryjars("${System.getProperty("java.home")}/lib/rt.jar")
     libraryjars(configurations.runtimeClasspath.get().files)
 }
 
