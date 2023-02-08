@@ -107,56 +107,53 @@ class BMFont(
         val glyphVector = font.createGlyphVector(fontRenderContext, char.toString())
         val bounds = glyphVector.visualBounds
 
-        return if (bounds.width > 0.0 && bounds.height > 0.0) {
-            // Character is printable
-            val glyph = FontGlyph()
+        // Character is printable
+        val glyph = FontGlyph()
 
-            // Set kerning distances
-            for (other in params.charList) {
-                val pair = (char.toInt() shl 16) or other.toInt()
-                if (kernings[pair, 0] != 0) {
-                    glyph.kernings[other] = kernings[pair, 0]
-                }
+        // Set kerning distances
+        for (other in params.charList) {
+            val pair = (char.toInt() shl 16) or other.toInt()
+            if (kernings[pair, 0] != 0) {
+                glyph.kernings[other] = kernings[pair, 0]
             }
-
-            val pad = params.distanceRange / 2f
-            val w = ceil(bounds.width + pad * 2).toInt()
-            val h = ceil(bounds.height + pad * 2).toInt()
-
-            // Get glyph path and translate it to center.
-            val tx = -bounds.x + pad
-            val ty = -bounds.y - bounds.height - pad
-            val path = glyphVector.getGlyphOutline(0, tx.toFloat(), ty.toFloat()) as GeneralPath
-
-            glyph.xOffset = (bounds.x - pad).roundToInt()
-            glyph.yOffset = (fontMetrics.ascent + bounds.y - pad).roundToInt()
-            glyph.xAdvance = glyphVector.getGlyphMetrics(0).advanceX.roundToInt()
-
-            // Generate main glyph image.
-            val gen = MsdfGen(params.msdfgen, w, h, params.distanceRange, Shape.fromPath(path).toString())
-            val glyphImage = gen.generateImage(params.fieldType)
-
-            glyph.width = w
-            glyph.height = h
-            glyph.image = glyphImage
-            glyph.channels = if (params.hasAlphaChannel) FontGlyph.CHANNELS_RGBA else FontGlyph.CHANNELS_RGB
-
-            if (params.alphaFieldType != Parameters.FIELD_TYPE_NONE && params.fieldType != Parameters.FIELD_TYPE_MTSDF) {
-                // Generate glyph image used for alpha layer.
-                // Then keep RGB channel of glyph image and use red channel of alpha image as alpha channel.
-                val alphaImage = gen.generateImage(params.alphaFieldType)
-                val glyphPixels = glyphImage.getRGB(0, 0, w, h, null, 0, w)
-                val alphaPixels = alphaImage.getRGB(0, 0, w, h, null, 0, w)
-                for (j in glyphPixels.indices) {
-                    glyphPixels[j] = (glyphPixels[j] and 0x00FFFFFF) or (alphaPixels[j] and 0xFF shl 24)
-                }
-                glyphImage.setRGB(0, 0, w, h, glyphPixels, 0, w)
-            }
-
-            glyph
-        } else {
-            null
         }
+
+        val pad = params.distanceRange / 2f
+        val w = ceil(bounds.width + pad * 2).toInt()
+        val h = ceil(bounds.height + pad * 2).toInt()
+
+        // Get glyph path and translate it to center.
+        val tx = -bounds.x + pad
+        val ty = -bounds.y - bounds.height - pad
+        val path = glyphVector.getGlyphOutline(0, tx.toFloat(), ty.toFloat()) as GeneralPath
+
+        glyph.xOffset = (bounds.x - pad).roundToInt()
+        glyph.yOffset = (fontMetrics.ascent + bounds.y - pad).roundToInt()
+        glyph.xAdvance = glyphVector.getGlyphMetrics(0).advanceX.roundToInt()
+
+        // Generate main glyph image.
+        val gen = MsdfGen(params.msdfgen, w, h, params.distanceRange, Shape.fromPath(path).toString())
+        val glyphImage = gen.generateImage(params.fieldType)
+
+        glyph.width = w
+        glyph.height = h
+        glyph.image = glyphImage
+        glyph.channels = if (params.hasAlphaChannel) FontGlyph.CHANNELS_RGBA else FontGlyph.CHANNELS_RGB
+
+        if (params.alphaFieldType != Parameters.FIELD_TYPE_NONE && params.fieldType != Parameters.FIELD_TYPE_MTSDF) {
+            // Generate glyph image used for alpha layer.
+            // Then keep RGB channel of glyph image and use red channel of alpha image as alpha channel.
+            val alphaImage = gen.generateImage(params.alphaFieldType)
+            val glyphPixels = glyphImage.getRGB(0, 0, w, h, null, 0, w)
+            val alphaPixels = alphaImage.getRGB(0, 0, w, h, null, 0, w)
+            for (j in glyphPixels.indices) {
+                glyphPixels[j] = (glyphPixels[j] and 0x00FFFFFF) or (alphaPixels[j] and 0xFF shl 24)
+            }
+            glyphImage.setRGB(0, 0, w, h, glyphPixels, 0, w)
+        }
+
+        return glyph
+
     }
 
     /**
