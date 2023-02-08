@@ -26,8 +26,9 @@ dependencies {
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_1_6
-    targetCompatibility = JavaVersion.VERSION_1_6
+    // Java 8 is needed by jcommander's more recent versions
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
 }
 
 val mainClassName = "com.maltaisn.msdfgdx.gen.MainKt"
@@ -68,8 +69,26 @@ tasks.register<ProGuardTask>("shrinkJar") {
     // refers to Oracle JDK 8 which has a rt.jar file (unlike later versions).
     val distFile = dist.get().archiveFile.get().asFile
     configuration("proguard-rules.pro")
+    // Use the jar task output as an input jar. This will automatically add the necessary task dependency.
     injars(distFile)
+//    outjars("build/proguard-obfuscated.jar")
+
+    val javaHome = System.getProperty("java.home")
+    // Automatically handle the Java version of this build.
+    if (System.getProperty("java.version").startsWith("1.")) {
+        // Before Java 9, the runtime classes were packaged in a single jar file.
+        libraryjars("$javaHome/lib/rt.jar")
+    } else {
+        // As of Java 9, the runtime classes are packaged in modular jmod files.
+        libraryjars(
+            // filters must be specified first, as a map
+            mapOf("jarfilter" to "!**.jar",
+                "filter"    to "!module-info.class"),
+            "$javaHome/jmods/java.base.jmod"
+        )
+    }
     outjars(file("$buildDir/msdfgen.jar"))
+
     libraryjars(configurations.runtimeClasspath.get().files)
 }
 

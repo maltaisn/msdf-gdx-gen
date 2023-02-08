@@ -106,7 +106,7 @@ class Parameters {
         outputPath.mkdirs()
         if (!outputPath.exists()) paramError("Could not create output directory at '$outputDir'.")
 
-        // Check is msdfgen executable can be executed.
+        // Check if msdfgen executable can be executed.
         try {
             Runtime.getRuntime().exec(msdfgen)
         } catch (e: IOException) {
