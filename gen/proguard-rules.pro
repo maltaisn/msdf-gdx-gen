@@ -20,13 +20,8 @@
 -dontwarn com.badlogic.gdx.**
 
 # Kotlin coroutines
--dontwarn kotlinx.coroutines.flow.**
--dontwarn kotlinx.coroutines.debug.**
--keepnames class kotlinx.coroutines.internal.MainDispatcherFactory {}
--keepnames class kotlinx.coroutines.CoroutineExceptionHandler {}
--keepclassmembernames class kotlinx.** {
-    volatile <fields>;
-}
+-dontwarn org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
+-dontwarn android.annotation.SuppressLint
 
 # Enums
 -keepclassmembers class * extends java.lang.Enum {

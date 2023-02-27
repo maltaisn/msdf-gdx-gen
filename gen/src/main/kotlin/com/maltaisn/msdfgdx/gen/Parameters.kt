@@ -38,7 +38,7 @@ class Parameters {
     var fieldType: String = FIELD_TYPE_MSDF
 
     @Parameter(names = ["-a", "--alpha-field-type"], description = "Alpha field type: none | sdf | psdf", order = 3)
-    var alphaFieldType: String = FIELD_TYPE_SDF
+    var alphaFieldType: String = ""
 
     @Parameter(names = ["-s", "--font-size"], description = "Font size for generated textures", order = 4)
     var fontSize: Int = 32

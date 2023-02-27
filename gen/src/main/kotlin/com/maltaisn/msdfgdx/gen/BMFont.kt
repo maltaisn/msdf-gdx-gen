@@ -49,7 +49,7 @@ import kotlin.math.roundToInt
  * Note that font and glyph metrics seems kinda off sometimes. I used:
  * - https://github.com/libgdx/libgdx/tree/aff6dd4a2622d64a62196111eb018d4699a19c8a/extensions/gdx-tools/src/com/badlogic/gdx/tools/hiero
  * - https://github.com/soimy/msdf-bmfont-xml/blob/ff3669c2bfffd06f29bacedcdf3f073379b45e7e/index.js
- * To guess which font metrics would work but it might not work for all fonts.
+ * To guess which font metrics would work, but it might not work for all fonts.
  */
 class BMFont(
     private val fontFile: File,
@@ -94,15 +94,15 @@ class BMFont(
                     progressListener(GenerationStep.GLYPH,
                         glyphsGenerated.incrementAndGet().toFloat() / params.charList.length)
 
-                    if (glyph == null) null else char to glyph
+                    char to glyph
                 }
-            }.awaitAll().filterNotNull()
+            }.awaitAll()
         }
 
         progressListener(GenerationStep.GLYPH, 1f)
     }
 
-    private fun generateGlyph(char: Char, kernings: IntIntMap): FontGlyph? {
+    private fun generateGlyph(char: Char, kernings: IntIntMap): FontGlyph {
         // Create glyph vector and get its bounding box.
         val glyphVector = font.createGlyphVector(fontRenderContext, char.toString())
         val bounds = glyphVector.visualBounds
@@ -112,7 +112,7 @@ class BMFont(
 
         // Set kerning distances
         for (other in params.charList) {
-            val pair = (char.toInt() shl 16) or other.toInt()
+            val pair = (char.code shl 16) or other.code
             if (kernings[pair, 0] != 0) {
                 glyph.kernings[other] = kernings[pair, 0]
             }
@@ -157,7 +157,7 @@ class BMFont(
     }
 
     /**
-     * Pack the generate glyphs to a texture atlas.
+     * Pack the generated glyphs to a texture atlas.
      */
     private fun pack(progressListener: ProgressListener) {
         val packer = TexturePacker(File(params.outputDir), TexturePacker.Settings().apply {
@@ -185,7 +185,7 @@ class BMFont(
 
         // Add glyph images to packer
         for ((char, glyph) in glyphs) {
-            packer.addImage(glyph.image, char.toInt().toString())
+            packer.addImage(glyph.image, char.code.toString())
         }
 
         // Remove any existing atlas related files.
@@ -249,14 +249,14 @@ class BMFont(
             bmfont.appendLine("page id=$i file=\"${getTextureAtlasFile(i).name}\"")
         }
 
-        val kerningsCount = glyphs.values.map { it.kernings.size }.sum()
+        val kerningsCount = glyphs.values.sumOf { it.kernings.size }
         val elementsCount = glyphs.size + kerningsCount
         var elementsDone = 0f
 
         // Char tags
         bmfont.appendLine("chars count=${glyphs.size}")
         for ((char, glyph) in glyphs) {
-            bmfont.appendLine("char id=${char.toInt()} x=${glyph.x} y=${glyph.y} " +
+            bmfont.appendLine("char id=${char.code} x=${glyph.x} y=${glyph.y} " +
                     "width=${glyph.width} height=${glyph.height} " +
                     "xoffset=${glyph.xOffset} yoffset=${glyph.yOffset} " +
                     "xadvance=${glyph.xAdvance} page=${glyph.page} chnl=${glyph.channels}")
@@ -268,7 +268,7 @@ class BMFont(
         bmfont.appendLine("kernings count=$kerningsCount")
         for ((char, glyph) in glyphs) {
             for ((other, kerning) in glyph.kernings) {
-                bmfont.appendLine("kerning first=${char.toInt()} second=${other.toInt()} amount=$kerning")
+                bmfont.appendLine("kerning first=${char.code} second=${other.code} amount=$kerning")
                 elementsDone++
                 progressListener(GenerationStep.FONT_FILE, elementsDone / elementsCount)
             }

@@ -33,7 +33,7 @@ java {
 
 val mainClassName = "com.maltaisn.msdfgdx.gen.MainKt"
 tasks.register<JavaExec>("run") {
-    main = mainClassName
+    mainClass.set(mainClassName)
     classpath = sourceSets.main.get().runtimeClasspath
     standardInput = System.`in`
     isIgnoreExitValue = true
@@ -55,7 +55,9 @@ val dist = tasks.register<Jar>("dist") {
 
     from(files(sourceSets.main.get().output.classesDirs))
     from(files(sourceSets.main.get().resources.srcDirs))
-    from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
+    from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) }) {
+        exclude("**/module-info.class")
+    }
     archiveBaseName.set("msdfgen")
 
     manifest {
@@ -65,13 +67,10 @@ val dist = tasks.register<Jar>("dist") {
 }
 
 tasks.register<ProGuardTask>("shrinkJar") {
-    // Make sure to run this task using IntelliJ, not on the command line, so that java.home
-    // refers to Oracle JDK 8 which has a rt.jar file (unlike later versions).
     val distFile = dist.get().archiveFile.get().asFile
     configuration("proguard-rules.pro")
     // Use the jar task output as an input jar. This will automatically add the necessary task dependency.
     injars(distFile)
-//    outjars("build/proguard-obfuscated.jar")
 
     val javaHome = System.getProperty("java.home")
     // Automatically handle the Java version of this build.
@@ -80,10 +79,10 @@ tasks.register<ProGuardTask>("shrinkJar") {
         libraryjars("$javaHome/lib/rt.jar")
     } else {
         // As of Java 9, the runtime classes are packaged in modular jmod files.
+        println("AAAAAA: ${javaHome}")
         libraryjars(
-            // filters must be specified first, as a map
             mapOf("jarfilter" to "!**.jar",
-                "filter"    to "!module-info.class"),
+                "filter" to "!module-info.class"),
             "$javaHome/jmods/java.base.jmod"
         )
     }

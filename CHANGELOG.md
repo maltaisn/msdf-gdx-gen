@@ -1,3 +1,6 @@
+### v0.1.4
+- Generate whitespace characters (#6).
+
 ### v0.1.3
 - Fixed out of memory error when generating large charset (#3)
 - Added `--fast-pack` option to enable the fast mode for the texture packer.
